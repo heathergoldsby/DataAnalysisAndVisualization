@@ -6,8 +6,7 @@ library(PerformanceAnalytics)
 
 
 # tickers to get data for
-symbols = c("VFINX","FCNTX", "QQQ")
-#symbols = c("FB", "AMZN", "NFLX", "GOOG")
+symbols = c("VFINX","FCNTX", "QQQ","FB", "AMZN", "NFLX", "GOOG")
 
 # start date
 start_date = "2001-01-01"

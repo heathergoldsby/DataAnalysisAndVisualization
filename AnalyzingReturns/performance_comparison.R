@@ -42,17 +42,15 @@ x.Price.yearly <- do.call(merge, lapply(symbols, function(x) {
 }))
 colnames(x.Price.yearly) = symbols
 # compute yearly returns
-x.Returns.yearly <- na.omit(Return.calculate(x.Price.yearly)) * 100
+x.Returns.yearly <- na.omit(Return.calculate(x.Price.yearly))
 
 
   ## Growth of $1 from 1.1.2000 to now.
 
-growthChart.long <- chart.CumReturns(x.Returns, main = "", colorset=rich6equal, legend.loc = "topleft", wealth.index=TRUE, auto.grid=FALSE)
+growthChart.long <- chart.CumReturns(x.Returns, main = "Growth of $1 over time", colorset=rich6equal, legend.loc = "topleft", wealth.index=TRUE, auto.grid=FALSE)
 growthChart.long
 
-
-
-growthChart.short <- chart.CumReturns(x.Returns.short, main = "", colorset=rich6equal, legend.loc = "topleft", wealth.index=TRUE, auto.grid=FALSE, xlab = "Time", ylab="Growth of $1" )
+growthChart.short <- chart.CumReturns(x.Returns.short, main = "Growth of $1 over time", colorset=rich6equal, legend.loc = "topleft", wealth.index=TRUE, auto.grid=FALSE)
 growthChart.short
 
 
@@ -60,7 +58,7 @@ growthChart.short
 price.df <- data.frame(date=index(x.Price), coredata(x.Price))
 
 for (i in 2:(ncol(price.df))) { 
-  aRet <- (price.df[nrow(price.df),i] - price.df[,i]) / price.df[,i] 
+  aRet <- ((price.df[nrow(price.df),i] - price.df[,i]) / price.df[,i]) + 1
   if (i == 2) {
     return.df <- aRet
   } else {
@@ -73,8 +71,11 @@ colnames(return.df)<- colnames(price.df)
 
 melted.return.df <- melt(return.df ,  id.vars = 'date', variable.name = 'Security')
 
-growthFromDateTillNowChart <- ggplot(data = melted.return.df, aes(x = date, y = value)) + geom_line(aes(colour = Security)) + scale_color_manual(values=rich6equal) + theme(legend.position = c(0.9, 0.8),  legend.title=element_text(size=8), legend.text=element_text(size=8)) + scale_x_date(name ="Start Date") + scale_y_continuous(name ="Growth of $1 from\n Start Date Until End") 
+growthFromDateTillNowChart <- ggplot(data = melted.return.df, aes(x = date, y = value)) + geom_line(aes(colour = Security)) + scale_color_manual(values=rich6equal) + theme(legend.position = c(0.9, 0.8),  legend.title=element_text(size=8), legend.text=element_text(size=8)) + scale_x_date(name ="Start Date") + scale_y_continuous(name ="")  + ggtitle("Growth of $1 from Start Date Until Present (10.2018)")
 growthFromDateTillNowChart
+ png(file="till_now.png",width=500,height=250)
+ growthFromDateTillNowChart
+ dev.off()
 
 
 
@@ -83,12 +84,12 @@ growthFromDateTillNowChart
 annual.returns.df <- data.frame(date=index(x.Returns.yearly), coredata(x.Returns.yearly))
 melted.annual.returns.df <- melt(annual.returns.df ,  id.vars = 'date', variable.name = 'Security')
 
-annualReturnsChart <- ggplot(data = melted.annual.returns.df, aes(x = date, y = value)) + geom_line(aes(colour = Security)) + scale_color_manual(values=rich6equal) + theme(legend.position = c(0.9, 0.2),  legend.title=element_text(size=8), legend.text=element_text(size=8)) + scale_x_date(name ="Year") + scale_y_continuous(name ="Annual Return Percentage") 
+annualReturnsChart <- ggplot(data = melted.annual.returns.df, aes(x = date, y = value*100)) + geom_line(aes(colour = Security)) + scale_color_manual(values=rich6equal) + theme(legend.position = c(0.9, 0.2),  legend.title=element_text(size=8), legend.text=element_text(size=8)) + scale_x_date(name ="Year") + scale_y_continuous(name ="Annual Return Percentage")  + ggtitle("Annual Return")
 annualReturnsChart
 
 
 ##Rolling Performance
-rollingPerformanceChart <- chart.RollingPerformance(x.Returns, main = "", colorset=rich6equal)
+rollingPerformanceChart <- chart.RollingPerformance(x.Returns, main = "12 Month Rolling Performance", colorset=rich6equal)
 rollingPerformanceChart
 
 
