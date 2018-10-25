@@ -73,11 +73,6 @@ melted.return.df <- melt(return.df ,  id.vars = 'date', variable.name = 'Securit
 
 growthFromDateTillNowChart <- ggplot(data = melted.return.df, aes(x = date, y = value)) + geom_line(aes(colour = Security)) + scale_color_manual(values=rich6equal) + theme(legend.position = c(0.9, 0.8),  legend.title=element_text(size=8), legend.text=element_text(size=8)) + scale_x_date(name ="Start Date") + scale_y_continuous(name ="")  + ggtitle("Growth of $1 from Start Date Until Present (10.2018)")
 growthFromDateTillNowChart
- png(file="till_now.png",width=500,height=250)
- growthFromDateTillNowChart
- dev.off()
-
-
 
 
 ##Comparison of Annual Returns
