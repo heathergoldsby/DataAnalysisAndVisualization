@@ -8,7 +8,7 @@ library(reshape2)
 ### Get the data
 
 # tickers to get data for
-symbols = c("VFINX","FB", "AAPL", "AMZN", "NFLX", "GOOG")
+symbols = c("VFINX","FCNTX", "QQQ", "FB", "AMZN", "NFLX", "GOOG")
 
 # start date
 start_date = "2001-01-01"
@@ -58,3 +58,9 @@ table.Drawdowns(x.Returns[,5,drop=FALSE])
 # Pain Index - 
 
 PainIndex(x.Returns)
+
+# Alpha, Beta, R-squared, and many more! 
+t <- table.SFM(x.Returns[,1:ncol(x.Returns)], x.Returns[,1])
+colnames(t) <- symbols
+t
+
