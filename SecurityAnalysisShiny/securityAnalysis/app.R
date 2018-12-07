@@ -13,17 +13,28 @@ ui <- fluidPage(
   
   sidebarLayout(
     sidebarPanel(
-      helpText("List tickers you are interseted in:"),
-      
+
       dateRangeInput("dates", "Date range:", start = "2000-01-01", min = "2000-01-01", startview="year"), 
       textInput("tickers", "Tickers (comma separated list):", value = "VFINX,FCNTX,QQQ"),
       selectInput("plotType", "Plot type:", choices = list("Capital Growth" = 1, "Captial Growth from Starting Point" = 2,
-                                                           "Annualized Return" = 3, "Rolling Return" = 4, selected = "Capital Growth")),
+                                                           "Annualized Return" = 3, "Rolling Return" = 4, "Drawdown" = 5)),
       
-      br()
+      br(), 
+      numericInput('rf', 'Risk Free Rate:', 0.03,
+                   min = 0, max = 1, step=0.01), 
+      numericInput('mar', 'Minimum Acceptable Return:', 0.04, min = 0, max = 1, step=0.01),
+      uiOutput("ddTickerSelection")
     ),
 
-    mainPanel(plotOutput("plot"))
+    mainPanel(
+      tabsetPanel(
+        tabPanel("Plots", plotOutput("plot")), 
+        tabPanel("Statistics", tableOutput("table"),h5("*These ratios use the first security listed as the benchmark."),
+ tableOutput("ratioTable")),
+        tabPanel("Drawdown", plotOutput("drawdownPlot"), tableOutput("drawdown"))
+      )
+      
+      )
   )
 )
 
@@ -37,6 +48,10 @@ server <- function(input, output) {
     }
     tickerList <- lapply(tickerList,trimws)
     unlist(tickerList)
+  })
+  
+  output$ddTickerSelection <- renderUI({
+    selectInput("ddTicker", "Drawdown Ticker:", choices = tickerList())
   })
   
   securityPriceData <- reactive({    
@@ -96,23 +111,7 @@ server <- function(input, output) {
     colnames(return.df)<- colnames(price.df)
     
     melt(return.df ,  id.vars = 'date', variable.name = 'Security')
-    
-    # df <- data.frame(date=index(monthlySecurityPriceData()), coredata(monthlySecurityPriceData()))
-    # 
-    # for (i in 2:(ncol(df))) { 
-    #   c <- (df[nrow(df),i] - df[,i]) /df[,i] 
-    #   if (i == 2) {
-    #     newdf <- c
-    #   } else {
-    #     newdf <- data.frame(newdf, c)
-    #   }
-    # }
-    # 
-    # newdf <- data.frame(as.Date(df[,1]),newdf)
-    # colnames(newdf)<- colnames(df)
-    # 
-    # melt(newdf,  id.vars = 'date', variable.name = 'Security')
-    
+
   })
   
   meltedYearlyReturns <- reactive({
@@ -129,12 +128,36 @@ server <- function(input, output) {
       ggplot(data = meltedYearlyReturns(), aes(x = date, y = value*100)) + geom_line(aes(colour = Security)) + scale_color_manual(values=rich6equal) + theme(legend.position = c(0.9, 0.2),  legend.title=element_text(size=8), legend.text=element_text(size=8)) + scale_x_date(name ="Year") + scale_y_continuous(name ="Annual Return Percentage") 
     } else if (input$plotType == 4) { 
       chart.RollingPerformance(monthlyReturnData(), main = "", colorset=rich6equal, legend.loc = "topleft")
-    } 
-    
-    
-    
+    } else if (input$plotType == 5) { 
+      chart.Drawdown(monthlyReturnData(), colorset=rich6equal, legend.loc = "bottomright")
+    }
   })
   
+  output$table <- renderTable({
+    t <- table.SFM(monthlyReturnData()[,1:ncol(monthlyReturnData())], monthlyReturnData()[,1])
+    colnames(t) <- tickerList()
+    t
+  },  rownames = TRUE)
+  
+  
+  output$ratioTable <- renderTable({
+    
+    # set your risk free rate
+    t2 <- rbind(Return.cumulative(monthlyReturnData()), Return.annualized(monthlyReturnData()), SharpeRatio(monthlyReturnData(), Rf=input$rf), SharpeRatio.annualized(monthlyReturnData(), Rf=input$rf), SortinoRatio(monthlyReturnData(), MAR=input$mar), StdDev(monthlyReturnData()), PainIndex(monthlyReturnData()), UlcerIndex(monthlyReturnData()))
+    t2  
+    
+  }, rownames = TRUE)
+  
+  output$drawdown <- renderTable({
+    i <- match(input$ddTicker, tickerList())
+    table.Drawdowns(monthlyReturnData()[,i,drop=FALSE])
+    
+  }, rownames = TRUE)
+  
+  output$drawdownPlot <- renderPlot({
+    i <- match(input$ddTicker, tickerList())
+    chart.Drawdown(monthlyReturnData()[,i], colorset=rich6equal, legend.loc = "bottomright")
+  })
 }
 
 # Run the app
